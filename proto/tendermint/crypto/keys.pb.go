@@ -31,6 +31,7 @@ type PublicKey struct {
 	//	*PublicKey_Ed25519
 	//	*PublicKey_Secp256K1
 	//	*PublicKey_Bls12381
+	//	*PublicKey_MlDsa65
 	Sum isPublicKey_Sum `protobuf_oneof:"sum"`
 }
 
@@ -84,10 +85,14 @@ type PublicKey_Secp256K1 struct {
 type PublicKey_Bls12381 struct {
 	Bls12381 []byte `protobuf:"bytes,3,opt,name=bls12381,proto3,oneof" json:"bls12381,omitempty"`
 }
+type PublicKey_MlDsa65 struct {
+	MlDsa65 []byte `protobuf:"bytes,4,opt,name=mldsa65,proto3,oneof" json:"mldsa65,omitempty"`
+}
 
 func (*PublicKey_Ed25519) isPublicKey_Sum()   {}
 func (*PublicKey_Secp256K1) isPublicKey_Sum() {}
 func (*PublicKey_Bls12381) isPublicKey_Sum()  {}
+func (*PublicKey_MlDsa65) isPublicKey_Sum()   {}
 
 func (m *PublicKey) GetSum() isPublicKey_Sum {
 	if m != nil {
@@ -117,12 +122,20 @@ func (m *PublicKey) GetBls12381() []byte {
 	return nil
 }
 
+func (m *PublicKey) GetMlDsa65() []byte {
+	if x, ok := m.GetSum().(*PublicKey_MlDsa65); ok {
+		return x.MlDsa65
+	}
+	return nil
+}
+
 // XXX_OneofWrappers is for the internal use of the proto package.
 func (*PublicKey) XXX_OneofWrappers() []interface{} {
 	return []interface{}{
 		(*PublicKey_Ed25519)(nil),
 		(*PublicKey_Secp256K1)(nil),
 		(*PublicKey_Bls12381)(nil),
+		(*PublicKey_MlDsa65)(nil),
 	}
 }
 
@@ -190,6 +203,8 @@ func (this *PublicKey) Compare(that interface{}) int {
 			thisType = 1
 		case *PublicKey_Bls12381:
 			thisType = 2
+		case *PublicKey_MlDsa65:
+			thisType = 3
 		default:
 			panic(fmt.Sprintf("compare: unexpected type %T in oneof", this.Sum))
 		}
@@ -201,6 +216,8 @@ func (this *PublicKey) Compare(that interface{}) int {
 			that1Type = 1
 		case *PublicKey_Bls12381:
 			that1Type = 2
+		case *PublicKey_MlDsa65:
+			that1Type = 3
 		default:
 			panic(fmt.Sprintf("compare: unexpected type %T in oneof", that1.Sum))
 		}
@@ -302,6 +319,36 @@ func (this *PublicKey_Bls12381) Compare(that interface{}) int {
 		return -1
 	}
 	if c := bytes.Compare(this.Bls12381, that1.Bls12381); c != 0 {
+		return c
+	}
+	return 0
+}
+func (this *PublicKey_MlDsa65) Compare(that interface{}) int {
+	if that == nil {
+		if this == nil {
+			return 0
+		}
+		return 1
+	}
+
+	that1, ok := that.(*PublicKey_MlDsa65)
+	if !ok {
+		that2, ok := that.(PublicKey_MlDsa65)
+		if ok {
+			that1 = &that2
+		} else {
+			return 1
+		}
+	}
+	if that1 == nil {
+		if this == nil {
+			return 0
+		}
+		return 1
+	} else if this == nil {
+		return -1
+	}
+	if c := bytes.Compare(this.MlDsa65, that1.MlDsa65); c != 0 {
 		return c
 	}
 	return 0
@@ -408,6 +455,30 @@ func (this *PublicKey_Bls12381) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *PublicKey_MlDsa65) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*PublicKey_MlDsa65)
+	if !ok {
+		that2, ok := that.(PublicKey_MlDsa65)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if !bytes.Equal(this.MlDsa65, that1.MlDsa65) {
+		return false
+	}
+	return true
+}
 func (m *PublicKey) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -488,6 +559,22 @@ func (m *PublicKey_Bls12381) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
+func (m *PublicKey_MlDsa65) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *PublicKey_MlDsa65) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.MlDsa65 != nil {
+		i -= len(m.MlDsa65)
+		copy(dAtA[i:], m.MlDsa65)
+		i = encodeVarintKeys(dAtA, i, uint64(len(m.MlDsa65)))
+		i--
+		dAtA[i] = 0x22
+	}
+	return len(dAtA) - i, nil
+}
 func encodeVarintKeys(dAtA []byte, offset int, v uint64) int {
 	offset -= sovKeys(v)
 	base := offset
@@ -543,6 +630,18 @@ func (m *PublicKey_Bls12381) Size() (n int) {
 	_ = l
 	if m.Bls12381 != nil {
 		l = len(m.Bls12381)
+		n += 1 + l + sovKeys(uint64(l))
+	}
+	return n
+}
+func (m *PublicKey_MlDsa65) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.MlDsa65 != nil {
+		l = len(m.MlDsa65)
 		n += 1 + l + sovKeys(uint64(l))
 	}
 	return n
@@ -681,6 +780,39 @@ func (m *PublicKey) Unmarshal(dAtA []byte) error {
 			v := make([]byte, postIndex-iNdEx)
 			copy(v, dAtA[iNdEx:postIndex])
 			m.Sum = &PublicKey_Bls12381{v}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MlDsa65", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowKeys
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthKeys
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthKeys
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			v := make([]byte, postIndex-iNdEx)
+			copy(v, dAtA[iNdEx:postIndex])
+			m.Sum = &PublicKey_MlDsa65{v}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

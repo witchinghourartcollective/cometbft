@@ -3,15 +3,20 @@ package types
 import (
 	"github.com/cometbft/cometbft/crypto/bls12381"
 	"github.com/cometbft/cometbft/crypto/ed25519"
+	"github.com/cometbft/cometbft/crypto/mldsa65"
 	cmtmath "github.com/cometbft/cometbft/libs/math"
 )
 
 // MaxSignatureSize is a maximum allowed signature size for the Proposal
 // and Vote.
 // XXX: secp256k1 does not have max signature size defined.
+//
+// ML-DSA-65 signatures (3309 bytes) are ~52x larger than Ed25519 (64 bytes)
+// -- every vote/commit/proposal signature now costs that much more in block
+// and gossip bandwidth for any validator using an mldsa65 consensus key.
 var MaxSignatureSize = cmtmath.MaxInt(
-	ed25519.SignatureSize,
-	bls12381.SignatureLength,
+	cmtmath.MaxInt(ed25519.SignatureSize, bls12381.SignatureLength),
+	mldsa65.SignatureSize,
 )
 
 // Signable is an interface for all signable things.

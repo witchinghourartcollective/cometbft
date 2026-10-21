@@ -6,6 +6,7 @@ import (
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/bls12381"
 	"github.com/cometbft/cometbft/crypto/ed25519"
+	"github.com/cometbft/cometbft/crypto/mldsa65"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 	"github.com/cometbft/cometbft/libs/json"
 	pc "github.com/cometbft/cometbft/proto/tendermint/crypto"
@@ -39,6 +40,7 @@ func init() {
 	if bls12381.Enabled {
 		json.RegisterType((*pc.PublicKey_Bls12381)(nil), "tendermint.crypto.PublicKey_Bls12381")
 	}
+	json.RegisterType((*pc.PublicKey_MlDsa65)(nil), "tendermint.crypto.PublicKey_MlDsa65")
 }
 
 // PubKeyToProto takes crypto.PubKey and transforms it to a protobuf Pubkey
@@ -65,6 +67,12 @@ func PubKeyToProto(k crypto.PubKey) (pc.PublicKey, error) {
 		kp = pc.PublicKey{
 			Sum: &pc.PublicKey_Bls12381{
 				Bls12381: k.Bytes(),
+			},
+		}
+	case mldsa65.PubKey:
+		kp = pc.PublicKey{
+			Sum: &pc.PublicKey_MlDsa65{
+				MlDsa65: k,
 			},
 		}
 	default:
@@ -105,6 +113,17 @@ func PubKeyFromProto(k pc.PublicKey) (crypto.PubKey, error) {
 			}
 		}
 		return bls12381.NewPublicKeyFromBytes(k.Bls12381)
+	case *pc.PublicKey_MlDsa65:
+		if len(k.MlDsa65) != mldsa65.PubKeySize {
+			return nil, ErrInvalidKeyLen{
+				Key:  k,
+				Got:  len(k.MlDsa65),
+				Want: mldsa65.PubKeySize,
+			}
+		}
+		pk := make(mldsa65.PubKey, mldsa65.PubKeySize)
+		copy(pk, k.MlDsa65)
+		return pk, nil
 	default:
 		return nil, fmt.Errorf("fromproto: key type %v is not supported", k)
 	}
@@ -154,6 +173,18 @@ func PubKeyFromTypeAndBytes(pkType string, bytes []byte) (crypto.PubKey, error) 
 		}
 
 		return bls12381.NewPublicKeyFromBytes(bytes)
+	case mldsa65.KeyType:
+		if len(bytes) != mldsa65.PubKeySize {
+			return nil, ErrInvalidKeyLen{
+				Key:  pkType,
+				Got:  len(bytes),
+				Want: mldsa65.PubKeySize,
+			}
+		}
+
+		pk := make(mldsa65.PubKey, mldsa65.PubKeySize)
+		copy(pk, bytes)
+		pubKey = pk
 	default:
 		return nil, ErrUnsupportedKey{Key: pkType}
 	}
