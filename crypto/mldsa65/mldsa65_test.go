@@ -35,7 +35,7 @@ func TestProtoRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("PubKeyToProto failed: %v", err)
 	}
-	if proto.GetMlDsa65() == nil {
+	if proto.GetMldsa65() == nil {
 		t.Fatal("expected PublicKey_MlDsa65 in proto oneof, got something else")
 	}
 
@@ -80,7 +80,7 @@ func TestMarshalUnmarshalWire(t *testing.T) {
 	if err := decoded.Unmarshal(wire); err != nil {
 		t.Fatalf("proto Unmarshal failed: %v", err)
 	}
-	if decoded.GetMlDsa65() == nil {
+	if decoded.GetMldsa65() == nil {
 		t.Fatal("unmarshaled proto missing mldsa65 field")
 	}
 
